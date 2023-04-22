@@ -1,0 +1,46 @@
+---
+AWSTemplateFormatVersion: "2023-04-22"
+Resources:
+  MyVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVPC
+
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+
+  MyVPCGatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref MyVPC
+
+  MySecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Security group for accessing the EC2 instance"
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+      VpcId: !Ref MyVPC
+
+  MyPrivateSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: "10.0.1.0/24"
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+
+  MyEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-0c94855ba95c71c99"
+      InstanceType: "t3.micro"
+      SubnetId: !Ref MyPrivateSubnet
+      SecurityGroupIds: [!Ref MySecurityGroup]
